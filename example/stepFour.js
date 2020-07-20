@@ -1,34 +1,31 @@
-import React, { useState } from 'react'
+import React from "react";
 
-export default () => {
-  const [checked, setChecked] = useState('')
-
+export default ({ checked, setChecked }) => {
   return (
     <div>
-      <div className='row'>
-        <div className='ten columns terms'>
+      <div className="row">
+        <div className="ten columns terms">
           <span>By clicking "Accept" I agree that:</span>
-          <ul className='docs-terms'>
+          <ul className="docs-terms">
             <li>
-              I have read and accepted the <a href='#'>User Agreement</a>
+              I have read and accepted the <a href="#">User Agreement</a>
             </li>
             <li>
-              I have read and accepted the <a href='#'>Privacy Policy</a>
+              I have read and accepted the <a href="#">Privacy Policy</a>
             </li>
             <li>I am at least 18 years old</li>
           </ul>
           <label>
             <input
-              type='checkbox'
-              //   defaultChecked={this.state.checked}
+              type="checkbox"
               checked={checked}
-              onChange={e => setChecked(e.target.value)}
+              onChange={(e) => setChecked(e.target.checked)}
               autoFocus
             />
-            <span> Accept </span>{' '}
+            <span> Accept </span>{" "}
           </label>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
