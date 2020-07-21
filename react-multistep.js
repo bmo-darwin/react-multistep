@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { createContext, useReducer, useContext } from "react";
 import { css, styled, setup } from "goober";
 setup(React.createElement);
 
@@ -81,82 +81,159 @@ const getButtonsState = (indx, length) => {
   }
 };
 
-export default function MultiStep(props) {
-  const stepsLen = props.steps.length;
+const StepContext = createContext({
+  step: 0,
+  buttons: {},
+  styles: {},
+});
 
-  let showNavigation = true;
-  if (props.showNavigation && props.showNavigation)
-    showNavigation = props.showNavigation;
+function stepReducer(numSteps) {
+  const btnState = (index) => getButtonsState(index, numSteps);
+  const styleState = (index) => getNavStyles(index, numSteps);
 
-  const [stylesState, setStyles] = useState(getNavStyles(0, stepsLen));
-  const [compState, setComp] = useState(0);
-  const [buttonsState, setButtons] = useState(getButtonsState(0, stepsLen));
+  return (state = {}, action) => {
+    switch (action.type) {
+      case "INCREMENT":
+        const step = state.step + 1;
 
-  const setStepState = (indx) => {
-    setStyles(getNavStyles(indx, stepsLen));
-    setComp(indx < props.steps.length ? indx : compState);
-    setButtons(getButtonsState(indx, stepsLen));
+        return {
+          step: step < numSteps ? step : state.step,
+          buttons: btnState(step),
+          styles: styleState(step),
+        };
+
+      case "DECREMENT":
+        const stepTo = state.step - 1;
+
+        return {
+          step: stepTo > -1 ? stepTo : state.step,
+          buttons: btnState(stepTo),
+          styles: styleState(stepTo),
+        };
+
+      case "JUMP":
+        return {
+          step: action.step,
+          buttons: btnState(action.step),
+          styles: styleState(action.step),
+        };
+
+      default:
+        return state;
+    }
+  };
+}
+
+export const MultiStep = {
+  Provider,
+  Status,
+  Step,
+  NavButtons,
+};
+
+function Provider({ steps, showNavigation = undefined, children }) {
+  const stepsLen = steps.length;
+  const reducer = stepReducer(stepsLen);
+
+  const [{ step, buttons, styles }, dispatch] = useReducer(reducer, {
+    step: 0,
+    buttons: getButtonsState(0, stepsLen),
+    styles: getNavStyles(0, stepsLen),
+  });
+
+  const ctx = {
+    showNavigation: showNavigation === undefined ? true : !!showNavigation,
+    stepsLen,
+    steps,
+    step,
+    buttons,
+    styles,
+    next: () => dispatch({ type: "INCREMENT" }),
+    previous: () => dispatch({ type: "DECREMENT" }),
+    jump: (index) => dispatch({ type: "JUMP", step: index }),
   };
 
-  const next = () => setStepState(compState + 1);
-  const previous = () =>
-    setStepState(compState > 0 ? compState - 1 : compState);
-  const handleKeyDown = (evt) => (evt.which === 13 ? next(stepsLen) : {});
+  const handleKeyDown = (e) =>
+    e.which === 13 ? dispatch({ type: "JUMP", step: stepsLen - 1 }) : {};
 
-  const handleOnClick = (evt) => {
-    if (
-      evt.currentTarget.value === stepsLen - 1 &&
-      compState === stepsLen - 1
-    ) {
-      setStepState(stepsLen);
+  return (
+    <StepContext.Provider value={ctx}>
+      <div onKeyDown={handleKeyDown}>{children}</div>
+    </StepContext.Provider>
+  );
+}
+
+function Status() {
+  const { steps, step, styles, stepsLen, jump } = useContext(StepContext);
+
+  const handleOnClick = (e) => {
+    if (e.currentTarget.value === stepsLen - 1 && step === stepsLen - 1) {
+      jump(stepsLen - 1);
     } else {
-      setStepState(evt.currentTarget.value);
+      jump(parseInt(e.currentTarget.value));
     }
   };
 
-  const renderSteps = () =>
-    props.steps.map((s, i) => (
-      <li
-        className={LiClass({ state: stylesState[i] })}
-        onClick={(e) => {
-          isValid(s) && handleOnClick(e);
-        }}
-        key={i}
-        value={i}
-      >
-        <span>{s.name || i + 1}</span>
-      </li>
-    ));
-
-  const renderNav = (show, index) =>
-    show && (
-      <div className="multistep-transition-btn-group">
-        <button
-          style={buttonsState.showPreviousBtn ? {} : { display: "none" }}
-          onClick={previous}
-          className="multistep-btn-prev"
+  return (
+    <Ol>
+      {steps.map((s, i) => (
+        <li
+          className={LiClass({ state: styles[i] })}
+          onClick={(e) => {
+            isValid(s) && handleOnClick(e);
+          }}
+          key={i}
+          value={i}
         >
-          Prev
-        </button>
+          <span>{s.name || i + 1}</span>
+        </li>
+      ))}
+    </Ol>
+  );
+}
 
-        <button
-          style={buttonsState.showNextBtn ? {} : { display: "none" }}
-          onClick={next}
-          disabled={nextDisabled(props.steps[index])}
-          className="multistep-btn-next"
-        >
-          Next
-        </button>
-      </div>
-    );
+function Step({ className = "", style = {} }) {
+  const { step, steps } = useContext(StepContext);
 
   return (
-    <div onKeyDown={handleKeyDown}>
-      <Ol>{renderSteps()}</Ol>
-      <div>{props.steps[compState].component}</div>
-      <div>{renderNav(showNavigation, compState)}</div>
+    <div className={className} style={style}>
+      {steps[step].component}
     </div>
   );
+}
+
+function NavButtons({
+  style = {},
+  className = "",
+  prevStyle = {},
+  prevClassName = "",
+  nextStyle = {},
+  nextClassName = "",
+}) {
+  const { buttons, steps, step, showNavigation, next, previous } = useContext(
+    StepContext
+  );
+
+  return showNavigation ? (
+    <div className={className} style={style}>
+      <button
+        style={buttons.showPreviousBtn ? prevStyle : { display: "none" }}
+        onClick={previous}
+        className={prevClassName}
+      >
+        Prev
+      </button>
+
+      <button
+        style={buttons.showNextBtn ? nextStyle : { display: "none" }}
+        onClick={next}
+        disabled={nextDisabled(steps[step])}
+        className={nextClassName}
+      >
+        Next
+      </button>
+    </div>
+  ) : null;
 }
 
 function isValid({ valid = undefined }) {

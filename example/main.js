@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
-import MultiStep from "../react-multistep";
+import { MultiStep } from "../react-multistep";
 import "./css/custom.css";
 import "./css/normilize.css";
 import "./css/skeleton.css";
@@ -65,7 +65,11 @@ const App = () => {
       <div className="container">
         <h5>Validated</h5>
 
-        <MultiStep steps={validatedSteps} />
+        <MultiStep.Provider steps={validatedSteps}>
+          <MultiStep.Status />
+          <MultiStep.Step />
+          <MultiStep.NavButtons />
+        </MultiStep.Provider>
       </div>
 
       <hr />
@@ -73,7 +77,11 @@ const App = () => {
       <div className="container">
         <h5>Non Validated</h5>
 
-        <MultiStep steps={nonValidateSteps} />
+        <MultiStep.Provider steps={nonValidateSteps}>
+          <MultiStep.Status />
+          <MultiStep.Step />
+          <MultiStep.NavButtons />
+        </MultiStep.Provider>
       </div>
 
       <div className="container app-footer">
