@@ -10,6 +10,7 @@ import StepThree from "./stepThree";
 import StepFour from "./stepFour";
 
 function useSteps() {
+  const [step, setStep] = useState(0);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
@@ -21,7 +22,7 @@ function useSteps() {
 
   const [checked, setChecked] = useState(false);
 
-  return [
+  const steps = [
     {
       component: (
         <StepOne {...{ firstName, lastName, setFirstName, setLastName }} />
@@ -51,21 +52,24 @@ function useSteps() {
       valid: !!checked,
     },
   ];
+
+  return { steps, step, setStep };
 }
 
 const App = () => {
-  const validatedSteps = useSteps();
-  const nonValidateSteps = useSteps().map(({ name, component }) => ({
-    name,
-    component,
-  }));
+  const validated = useSteps();
+  const nonValidated = useSteps();
 
   return (
     <div>
       <div className="container">
         <h5>Validated</h5>
 
-        <MultiStep.Provider steps={validatedSteps}>
+        <MultiStep.Provider
+          steps={validated.steps}
+          activeStep={validated.step}
+          handleStep={validated.setStep}
+        >
           <MultiStep.Status />
           <MultiStep.Step />
           <MultiStep.NavButtons />
@@ -77,7 +81,14 @@ const App = () => {
       <div className="container">
         <h5>Non Validated</h5>
 
-        <MultiStep.Provider steps={nonValidateSteps}>
+        <MultiStep.Provider
+          steps={nonValidated.steps.map(({ name, component }) => ({
+            name,
+            component,
+          }))}
+          activeStep={nonValidated.step}
+          handleStep={nonValidated.setStep}
+        >
           <MultiStep.Status />
           <MultiStep.Step />
           <MultiStep.NavButtons />
