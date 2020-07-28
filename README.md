@@ -22,22 +22,18 @@ To use this module in your app run:
 npm install react-multistep
 ```
 
-next, import it inside of your app:
+#### Props
 
-```sh
-const MultiStep = import from 'react-multistep'
-```
-
-Component has only one Prop, 'showNavigation', which controls if the navigation buttons should be visable:
-
-```sh
-prop=showNavigation
-type: boolean (default = true)
-```
+| Prop             | Type                                                          | Required? | Notes                                                |
+| ---------------- | ------------------------------------------------------------- | --------- | ---------------------------------------------------- |
+| `showNavigation` | `boolean`                                                     | `false`   |                                                      |
+| `steps`          | `[{ component: React.Node, name?: string, valid?: boolean }]` | `true`    |                                                      |
+| `activeStep`     | `number`                                                      | `false`   | Defaults to `0`.                                     |
+| `handleStep`     | `(step: number) => void`                                      | `true`    | Allows parent component to control step transitions. |
 
 It takes an array of objects representing individual steps:
 
-```javascript
+```js
 const steps = [
   { name: "StepOne", component: <StepOne /> },
   { name: "StepTwo", component: <StepTwo /> },
@@ -45,20 +41,29 @@ const steps = [
   { name: "StepFour", component: <StepFour /> },
 ];
 
-<MultiStep.Provider>
-  {" "}
-  showNavigation={true} steps={steps}>
-  <MultiStep.Status />
-  <MultiStep.Step style={{}} className="" />
-  <MultiStep.NavButtons
-    style={{}}
-    className=""
-    prevStyle={{}}
-    prevClassName=""
-    nextStyle={{}}
-    nextClassName=""
-  />
-</MultiStep.Provider>;
+const StepComp = (props) => {
+  const [step, setStep] = useState(0);
+
+  return (
+    <MultiStep.Provider>
+      showNavigation={true}
+      steps={steps}
+      activeStep={step}
+      handleStep={setStep}
+      >
+      <MultiStep.Status />
+      <MultiStep.Step style={{}} className="" />
+      <MultiStep.NavButtons
+        style={{}}
+        className=""
+        prevStyle={{}}
+        prevClassName=""
+        nextStyle={{}}
+        nextClassName=""
+      />
+    </MultiStep.Provider>
+  );
+};
 ```
 
 #### If you want to explore try the included example...
